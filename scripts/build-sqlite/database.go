@@ -14,39 +14,8 @@ const (
 
 	createTableQuery = `
 	CREATE TABLE primes (
-    id INTEGER PRIMARY KEY,
     prime INTEGER
 	);
-
-	CREATE INDEX one_digit_primes ON primes (prime) 
-	WHERE prime > 0 AND prime < 10;
-
-	CREATE INDEX two_digit_primes ON primes (prime) 
-	WHERE prime > 9 AND prime < 100;
-
-	CREATE INDEX three_digit_primes ON primes (prime) 
-	WHERE prime > 99 AND prime < 1000;
-
-	CREATE INDEX four_digit_primes ON primes (prime) 
-	WHERE prime > 999 AND prime < 10000;
-
-	CREATE INDEX five_digit_primes ON primes (prime) 
-	WHERE prime > 9999 AND prime < 100000;
-
-	CREATE INDEX six_digit_primes ON primes (prime) 
-	WHERE prime > 99999 AND prime < 1000000;
-
-	CREATE INDEX seven_digit_primes ON primes (prime) 
-	WHERE prime > 999999 AND prime < 10000000;
-
-	CREATE INDEX eight_digit_primes ON primes (prime) 
-	WHERE prime > 9999999 AND prime < 100000000;
-
-	CREATE INDEX nine_digit_primes ON primes (prime) 
-	WHERE prime > 99999999 AND prime < 1000000000;
-
-	CREATE INDEX ten_digit_primes ON primes (prime) 
-	WHERE prime > 999999999;
 `
 
 	insertValueQuery = `
@@ -93,6 +62,10 @@ func insertValues(ctx context.Context, logger *slog.Logger, db *sql.DB, primes [
 	logger.InfoContext(ctx, "preparing transaction", slog.Int("num_primes", len(primes)))
 
 	for idx := range primes {
+		if idx%maxAlloc == 0 {
+			logger.InfoContext(ctx, "executing insert query", slog.Int("cur_index", idx))
+		}
+
 		if _, err = tx.ExecContext(ctx, insertValueQuery, primes[idx]); err != nil {
 			return errors.Join(err, tx.Rollback())
 		}
