@@ -1,0 +1,77 @@
+syntax = "proto3";
+
+package primes.v1;
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+import "validate/validate.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
+
+// Defines the import path that should be used to import the generated package,
+// and the package name.
+option go_package = "github.com/zalgonoise/tendigitprimes/pb;pb";
+
+
+// These annotations are used when generating the OpenAPI file.
+option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
+  swagger: "2.0"
+  info: {
+    title: "Primes"
+    version: "1.0"
+    description: "Returns random prime numbers up to 10 digits in length."
+  }
+  schemes: HTTP
+  host: "localhost:8080"
+  tags: [
+    {
+      name: "Primes"
+      description: "Service which provides random prime numbers up to 10 digits in length"
+    }
+  ]
+  responses: {
+    key: "401"
+    value: {
+      description: "Unauthenticated"
+      schema: {
+        json_schema: {
+          ref: "#/definitions/rpcStatus"
+        }
+      }
+    }
+  }
+  responses: {
+    key: "403"
+    value: {
+      description: "Unauthorized"
+      schema: {
+        json_schema: {
+          ref: "#/definitions/rpcStatus"
+        }
+      }
+    }
+  }
+};
+
+service Primes {
+  rpc Get(PrimeRequest) returns (PrimeResponse) {
+    option (google.api.http) = {
+      get: "/v1/prime"
+    };
+
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Returns a random prime number up to 10 digits in length"
+      description: "This endpoint returns a random prime number, up to 10 digits in length."
+      tags: "Primes"
+    };
+  }
+}
+
+message PrimeRequest {
+  int64 min = 1 [json_name="min", (validate.rules).int64.gte = 2];
+  int64 max = 2 [json_name="max", (validate.rules).int64.lte = 9999999999];
+}
+
+message PrimeResponse {
+  int64 prime = 1 [json_name="prime_number"];
+}
