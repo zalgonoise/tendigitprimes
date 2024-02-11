@@ -1,0 +1,117 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Primes",
+    "description": "Returns random prime numbers up to 10 digits in length.",
+    "version": "1.0"
+  },
+  "tags": [
+    {
+      "name": "Primes",
+      "description": "Service which provides random prime numbers up to 10 digits in length"
+    }
+  ],
+  "host": "localhost:8080",
+  "schemes": [
+    "http"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v1/prime": {
+      "get": {
+        "summary": "Returns a random prime number up to 10 digits in length",
+        "description": "This endpoint returns a random prime number, up to 10 digits in length.",
+        "operationId": "Primes_Get",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1PrimeResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthenticated",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "min",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          },
+          {
+            "name": "max",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "Primes"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "v1PrimeResponse": {
+      "type": "object",
+      "properties": {
+        "prime_number": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    }
+  }
+}
