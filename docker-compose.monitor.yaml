@@ -1,0 +1,54 @@
+version: '3.7'
+services:
+
+  primes-prom:
+    image: prom/prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./provisioning/prometheus/prometheus.yaml:/etc/prometheus/prometheus.yml:ro
+      - observability-prom:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=730d'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+      - '--enable-feature=exemplar-storage'
+      - '--enable-feature=memory-snapshot-on-shutdown'
+      - '--enable-feature=traceToMetrics'
+    healthcheck:
+      test: [ "CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:9090/-/healthy || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - primes-network
+
+  primes-grafana:
+    image: grafana/grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_FEATURE_TOGGLES_ENABLE=traceqlEditor
+      - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
+    volumes:
+      - ./provisioning/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+      - observability-grafana:/var/lib/grafana
+    healthcheck:
+      test: [ "CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - primes-network
+
+volumes:
+  observability-prom:
+  observability-grafana:
+
+networks:
+  primes-network:
