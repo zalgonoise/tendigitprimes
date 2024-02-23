@@ -4,6 +4,7 @@ SHELL=/bin/bash -e -o pipefail
 PWD = $(shell pwd)
 
 # constants
+GOLANGCI_VERSION = 1.56.2
 DOCKER_REPO = tendigitprimes
 DOCKER_TAG = latest
 
@@ -41,6 +42,14 @@ GO_BUILD = mkdir -pv "$(@)" && go build -ldflags="-w -s" -o "$(@)" ./...
 .PHONY: out/bin
 out/bin:
 	$(GO_BUILD)
+
+GOLANGCI_LINT = bin/golangci-lint-$(GOLANGCI_VERSION)
+$(GOLANGCI_LINT):
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | bash -s -- -b bin v$(GOLANGCI_VERSION)
+	@mv bin/golangci-lint "$(@)"
+
+lint: fmt $(GOLANGCI_LINT) download ## Lints all code with golangci-lint
+	@$(GOLANGCI_LINT) run
 
 test: ## Runs all tests
 	@go test -tags integration $(ARGS) ./...
