@@ -75,5 +75,9 @@ func extract(ctx context.Context, logger *slog.Logger, path string) ([][]any, er
 		values = append(values, []any{value})
 	}
 
-	return values, errors.Join(errs...)
+	if len(errs) > 0 {
+		return nil, errors.Join(errs...)
+	}
+
+	return values, nil
 }

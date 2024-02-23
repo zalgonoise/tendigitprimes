@@ -47,6 +47,14 @@ func initDatabase(ctx context.Context, logger *slog.Logger, db *sql.DB) error {
 		}
 	}
 
+	if rerr := r.Close(); rerr != nil {
+		return err
+	}
+
+	if err := r.Err(); err != nil {
+		return err
+	}
+
 	logger.InfoContext(ctx, "initializing primes table in the database")
 	if _, err = db.ExecContext(ctx, createTableQuery); err != nil {
 		return err
