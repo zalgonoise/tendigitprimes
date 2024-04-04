@@ -22,16 +22,75 @@
     "application/json"
   ],
   "paths": {
-    "/v1/prime": {
+    "/v1/primes": {
       "get": {
-        "summary": "Returns a random prime number up to 10 digits in length",
+        "summary": "Returns a set of prime numbers up to 10 digits in length",
         "description": "This endpoint returns a random prime number, up to 10 digits in length.",
-        "operationId": "Primes_Get",
+        "operationId": "Primes_List",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1PrimeResponse"
+              "$ref": "#/definitions/v1ListResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthenticated",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "min",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          },
+          {
+            "name": "max",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          },
+          {
+            "name": "max_results",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "Primes"
+        ]
+      }
+    },
+    "/v1/primes/rand": {
+      "get": {
+        "summary": "Returns a random prime number up to 10 digits in length",
+        "description": "This endpoint returns a random prime number, up to 10 digits in length.",
+        "operationId": "Primes_Random",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1RandomResponse"
             }
           },
           "401": {
@@ -104,7 +163,19 @@
         }
       }
     },
-    "v1PrimeResponse": {
+    "v1ListResponse": {
+      "type": "object",
+      "properties": {
+        "prime_numbers": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "int64"
+          }
+        }
+      }
+    },
+    "v1RandomResponse": {
       "type": "object",
       "properties": {
         "prime_number": {
