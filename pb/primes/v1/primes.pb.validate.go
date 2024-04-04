@@ -35,22 +35,22 @@ var (
 	_ = sort.Sort
 )
 
-// Validate checks the field values on PrimeRequest with the rules defined in
+// Validate checks the field values on RandomRequest with the rules defined in
 // the proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
-func (m *PrimeRequest) Validate() error {
+func (m *RandomRequest) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on PrimeRequest with the rules defined
+// ValidateAll checks the field values on RandomRequest with the rules defined
 // in the proto definition for this message. If any rules are violated, the
-// result is a list of violation errors wrapped in PrimeRequestMultiError, or
+// result is a list of violation errors wrapped in RandomRequestMultiError, or
 // nil if none found.
-func (m *PrimeRequest) ValidateAll() error {
+func (m *RandomRequest) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *PrimeRequest) validate(all bool) error {
+func (m *RandomRequest) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -58,7 +58,7 @@ func (m *PrimeRequest) validate(all bool) error {
 	var errors []error
 
 	if m.GetMin() < 2 {
-		err := PrimeRequestValidationError{
+		err := RandomRequestValidationError{
 			field:  "Min",
 			reason: "value must be greater than or equal to 2",
 		}
@@ -69,7 +69,7 @@ func (m *PrimeRequest) validate(all bool) error {
 	}
 
 	if m.GetMax() > 9999999999 {
-		err := PrimeRequestValidationError{
+		err := RandomRequestValidationError{
 			field:  "Max",
 			reason: "value must be less than or equal to 9999999999",
 		}
@@ -80,18 +80,19 @@ func (m *PrimeRequest) validate(all bool) error {
 	}
 
 	if len(errors) > 0 {
-		return PrimeRequestMultiError(errors)
+		return RandomRequestMultiError(errors)
 	}
 
 	return nil
 }
 
-// PrimeRequestMultiError is an error wrapping multiple validation errors
-// returned by PrimeRequest.ValidateAll() if the designated constraints aren't met.
-type PrimeRequestMultiError []error
+// RandomRequestMultiError is an error wrapping multiple validation errors
+// returned by RandomRequest.ValidateAll() if the designated constraints
+// aren't met.
+type RandomRequestMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m PrimeRequestMultiError) Error() string {
+func (m RandomRequestMultiError) Error() string {
 	var msgs []string
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -100,11 +101,11 @@ func (m PrimeRequestMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m PrimeRequestMultiError) AllErrors() []error { return m }
+func (m RandomRequestMultiError) AllErrors() []error { return m }
 
-// PrimeRequestValidationError is the validation error returned by
-// PrimeRequest.Validate if the designated constraints aren't met.
-type PrimeRequestValidationError struct {
+// RandomRequestValidationError is the validation error returned by
+// RandomRequest.Validate if the designated constraints aren't met.
+type RandomRequestValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -112,22 +113,22 @@ type PrimeRequestValidationError struct {
 }
 
 // Field function returns field value.
-func (e PrimeRequestValidationError) Field() string { return e.field }
+func (e RandomRequestValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e PrimeRequestValidationError) Reason() string { return e.reason }
+func (e RandomRequestValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e PrimeRequestValidationError) Cause() error { return e.cause }
+func (e RandomRequestValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e PrimeRequestValidationError) Key() bool { return e.key }
+func (e RandomRequestValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e PrimeRequestValidationError) ErrorName() string { return "PrimeRequestValidationError" }
+func (e RandomRequestValidationError) ErrorName() string { return "RandomRequestValidationError" }
 
 // Error satisfies the builtin error interface
-func (e PrimeRequestValidationError) Error() string {
+func (e RandomRequestValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -139,14 +140,14 @@ func (e PrimeRequestValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sPrimeRequest.%s: %s%s",
+		"invalid %sRandomRequest.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = PrimeRequestValidationError{}
+var _ error = RandomRequestValidationError{}
 
 var _ interface {
 	Field() string
@@ -154,24 +155,24 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = PrimeRequestValidationError{}
+} = RandomRequestValidationError{}
 
-// Validate checks the field values on PrimeResponse with the rules defined in
+// Validate checks the field values on RandomResponse with the rules defined in
 // the proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
-func (m *PrimeResponse) Validate() error {
+func (m *RandomResponse) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on PrimeResponse with the rules defined
+// ValidateAll checks the field values on RandomResponse with the rules defined
 // in the proto definition for this message. If any rules are violated, the
-// result is a list of violation errors wrapped in PrimeResponseMultiError, or
-// nil if none found.
-func (m *PrimeResponse) ValidateAll() error {
+// result is a list of violation errors wrapped in RandomResponseMultiError,
+// or nil if none found.
+func (m *RandomResponse) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *PrimeResponse) validate(all bool) error {
+func (m *RandomResponse) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -181,19 +182,19 @@ func (m *PrimeResponse) validate(all bool) error {
 	// no validation rules for Prime
 
 	if len(errors) > 0 {
-		return PrimeResponseMultiError(errors)
+		return RandomResponseMultiError(errors)
 	}
 
 	return nil
 }
 
-// PrimeResponseMultiError is an error wrapping multiple validation errors
-// returned by PrimeResponse.ValidateAll() if the designated constraints
+// RandomResponseMultiError is an error wrapping multiple validation errors
+// returned by RandomResponse.ValidateAll() if the designated constraints
 // aren't met.
-type PrimeResponseMultiError []error
+type RandomResponseMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m PrimeResponseMultiError) Error() string {
+func (m RandomResponseMultiError) Error() string {
 	var msgs []string
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -202,11 +203,11 @@ func (m PrimeResponseMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m PrimeResponseMultiError) AllErrors() []error { return m }
+func (m RandomResponseMultiError) AllErrors() []error { return m }
 
-// PrimeResponseValidationError is the validation error returned by
-// PrimeResponse.Validate if the designated constraints aren't met.
-type PrimeResponseValidationError struct {
+// RandomResponseValidationError is the validation error returned by
+// RandomResponse.Validate if the designated constraints aren't met.
+type RandomResponseValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -214,22 +215,22 @@ type PrimeResponseValidationError struct {
 }
 
 // Field function returns field value.
-func (e PrimeResponseValidationError) Field() string { return e.field }
+func (e RandomResponseValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e PrimeResponseValidationError) Reason() string { return e.reason }
+func (e RandomResponseValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e PrimeResponseValidationError) Cause() error { return e.cause }
+func (e RandomResponseValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e PrimeResponseValidationError) Key() bool { return e.key }
+func (e RandomResponseValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e PrimeResponseValidationError) ErrorName() string { return "PrimeResponseValidationError" }
+func (e RandomResponseValidationError) ErrorName() string { return "RandomResponseValidationError" }
 
 // Error satisfies the builtin error interface
-func (e PrimeResponseValidationError) Error() string {
+func (e RandomResponseValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -241,14 +242,14 @@ func (e PrimeResponseValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sPrimeResponse.%s: %s%s",
+		"invalid %sRandomResponse.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = PrimeResponseValidationError{}
+var _ error = RandomResponseValidationError{}
 
 var _ interface {
 	Field() string
@@ -256,4 +257,235 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = PrimeResponseValidationError{}
+} = RandomResponseValidationError{}
+
+// Validate checks the field values on ListRequest with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *ListRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ListRequest with the rules defined in
+// the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in ListRequestMultiError, or
+// nil if none found.
+func (m *ListRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ListRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if m.GetMin() < 2 {
+		err := ListRequestValidationError{
+			field:  "Min",
+			reason: "value must be greater than or equal to 2",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if m.GetMax() > 9999999999 {
+		err := ListRequestValidationError{
+			field:  "Max",
+			reason: "value must be less than or equal to 9999999999",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if val := m.GetMaxResults(); val < 0 || val > 5000 {
+		err := ListRequestValidationError{
+			field:  "MaxResults",
+			reason: "value must be inside range [0, 5000]",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return ListRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// ListRequestMultiError is an error wrapping multiple validation errors
+// returned by ListRequest.ValidateAll() if the designated constraints aren't met.
+type ListRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ListRequestMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ListRequestMultiError) AllErrors() []error { return m }
+
+// ListRequestValidationError is the validation error returned by
+// ListRequest.Validate if the designated constraints aren't met.
+type ListRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListRequestValidationError) ErrorName() string { return "ListRequestValidationError" }
+
+// Error satisfies the builtin error interface
+func (e ListRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListRequestValidationError{}
+
+// Validate checks the field values on ListResponse with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *ListResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ListResponse with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in ListResponseMultiError, or
+// nil if none found.
+func (m *ListResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ListResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if len(errors) > 0 {
+		return ListResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// ListResponseMultiError is an error wrapping multiple validation errors
+// returned by ListResponse.ValidateAll() if the designated constraints aren't met.
+type ListResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ListResponseMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ListResponseMultiError) AllErrors() []error { return m }
+
+// ListResponseValidationError is the validation error returned by
+// ListResponse.Validate if the designated constraints aren't met.
+type ListResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListResponseValidationError) ErrorName() string { return "ListResponseValidationError" }
+
+// Error satisfies the builtin error interface
+func (e ListResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListResponseValidationError{}
