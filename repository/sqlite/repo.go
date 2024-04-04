@@ -3,23 +3,24 @@ package sqlite
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
 	"math/rand"
-	"os"
-
+	//_ "github.com/mattn/go-sqlite3"
+	//"modernc.org/sqlite"
 	_ "modernc.org/sqlite" // Database driver
 )
 
 const (
-	uriFormat = "file:%s?cache=shared"
-	inMemory  = ":memory:"
-)
+	defaultLimit = 5000
 
-const (
 	primesQuery = `
 		SELECT prime FROM primes
-			WHERE prime >= ? AND prime <= ?; 
+			WHERE prime BETWEEN ? AND ?
+`
+	primesLimitQuery = `
+		SELECT prime FROM primes
+			WHERE prime BETWEEN ? AND ?
+			LIMIT %d
 `
 )
 
@@ -27,7 +28,7 @@ type Repository struct {
 	DB *sql.DB
 }
 
-func (r Repository) Get(ctx context.Context, min, max int64) (int64, error) {
+func (r Repository) Random(ctx context.Context, min, max int64) (int64, error) {
 	rows, err := r.DB.QueryContext(ctx, primesQuery, min, max)
 	if err != nil {
 		return 0, err
@@ -49,43 +50,32 @@ func (r Repository) Get(ctx context.Context, min, max int64) (int64, error) {
 	return ns[rand.Intn(len(ns))], nil
 }
 
-func NewRepository(uri string) (Repository, error) {
-	switch uri {
-	case inMemory:
-	case "":
-		uri = inMemory
-	default:
-		if err := validateURI(uri); err != nil {
-			return Repository{}, err
-		}
+func (r Repository) List(ctx context.Context, min, max, limit int64) ([]int64, error) {
+	if limit == 0 {
+		limit = defaultLimit
 	}
 
-	db, err := sql.Open("sqlite", fmt.Sprintf(uriFormat, uri))
+	rows, err := r.DB.QueryContext(ctx, fmt.Sprintf(primesLimitQuery, limit), min, max)
 	if err != nil {
-		return Repository{}, err
+		return nil, err
 	}
 
-	return Repository{db}, nil
+	defer rows.Close()
+	ns := make([]int64, 0, max-min)
+
+	for rows.Next() {
+		var n int64
+
+		if err := rows.Scan(&n); err != nil {
+			return nil, err
+		}
+
+		ns = append(ns, n)
+	}
+
+	return ns, nil
 }
 
-func validateURI(uri string) error {
-	stat, err := os.Stat(uri)
-	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			f, err := os.Create(uri)
-			if err != nil {
-				return err
-			}
-
-			return f.Close()
-		}
-
-		return err
-	}
-
-	if stat.IsDir() {
-		return fmt.Errorf("%s is a directory", uri)
-	}
-
-	return nil
+func NewRepository(db *sql.DB) (Repository, error) {
+	return Repository{db}, nil
 }

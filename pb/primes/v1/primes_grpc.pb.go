@@ -19,14 +19,16 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	Primes_Get_FullMethodName = "/primes.v1.Primes/Get"
+	Primes_Random_FullMethodName = "/primes.v1.Primes/Random"
+	Primes_List_FullMethodName   = "/primes.v1.Primes/List"
 )
 
 // PrimesClient is the client API for Primes service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type PrimesClient interface {
-	Get(ctx context.Context, in *PrimeRequest, opts ...grpc.CallOption) (*PrimeResponse, error)
+	Random(ctx context.Context, in *RandomRequest, opts ...grpc.CallOption) (*RandomResponse, error)
+	List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListResponse, error)
 }
 
 type primesClient struct {
@@ -37,9 +39,18 @@ func NewPrimesClient(cc grpc.ClientConnInterface) PrimesClient {
 	return &primesClient{cc}
 }
 
-func (c *primesClient) Get(ctx context.Context, in *PrimeRequest, opts ...grpc.CallOption) (*PrimeResponse, error) {
-	out := new(PrimeResponse)
-	err := c.cc.Invoke(ctx, Primes_Get_FullMethodName, in, out, opts...)
+func (c *primesClient) Random(ctx context.Context, in *RandomRequest, opts ...grpc.CallOption) (*RandomResponse, error) {
+	out := new(RandomResponse)
+	err := c.cc.Invoke(ctx, Primes_Random_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *primesClient) List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListResponse, error) {
+	out := new(ListResponse)
+	err := c.cc.Invoke(ctx, Primes_List_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +61,8 @@ func (c *primesClient) Get(ctx context.Context, in *PrimeRequest, opts ...grpc.C
 // All implementations must embed UnimplementedPrimesServer
 // for forward compatibility
 type PrimesServer interface {
-	Get(context.Context, *PrimeRequest) (*PrimeResponse, error)
+	Random(context.Context, *RandomRequest) (*RandomResponse, error)
+	List(context.Context, *ListRequest) (*ListResponse, error)
 	mustEmbedUnimplementedPrimesServer()
 }
 
@@ -58,8 +70,11 @@ type PrimesServer interface {
 type UnimplementedPrimesServer struct {
 }
 
-func (UnimplementedPrimesServer) Get(context.Context, *PrimeRequest) (*PrimeResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
+func (UnimplementedPrimesServer) Random(context.Context, *RandomRequest) (*RandomResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Random not implemented")
+}
+func (UnimplementedPrimesServer) List(context.Context, *ListRequest) (*ListResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method List not implemented")
 }
 func (UnimplementedPrimesServer) mustEmbedUnimplementedPrimesServer() {}
 
@@ -74,20 +89,38 @@ func RegisterPrimesServer(s grpc.ServiceRegistrar, srv PrimesServer) {
 	s.RegisterService(&Primes_ServiceDesc, srv)
 }
 
-func _Primes_Get_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(PrimeRequest)
+func _Primes_Random_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RandomRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PrimesServer).Get(ctx, in)
+		return srv.(PrimesServer).Random(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Primes_Get_FullMethodName,
+		FullMethod: Primes_Random_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PrimesServer).Get(ctx, req.(*PrimeRequest))
+		return srv.(PrimesServer).Random(ctx, req.(*RandomRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Primes_List_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PrimesServer).List(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Primes_List_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PrimesServer).List(ctx, req.(*ListRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -100,8 +133,12 @@ var Primes_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*PrimesServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Get",
-			Handler:    _Primes_Get_Handler,
+			MethodName: "Random",
+			Handler:    _Primes_Random_Handler,
+		},
+		{
+			MethodName: "List",
+			Handler:    _Primes_List_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
