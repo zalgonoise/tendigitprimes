@@ -54,9 +54,9 @@ option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
 };
 
 service Primes {
-  rpc Get(PrimeRequest) returns (PrimeResponse) {
+  rpc Random(RandomRequest) returns (RandomResponse) {
     option (google.api.http) = {
-      get: "/v1/prime"
+      get: "/v1/primes/rand"
     };
 
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
@@ -65,13 +65,35 @@ service Primes {
       tags: "Primes"
     };
   }
+
+  rpc List(ListRequest) returns (ListResponse) {
+    option (google.api.http) = {
+      get: "/v1/primes"
+    };
+
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Returns a set of prime numbers up to 10 digits in length"
+      description: "This endpoint returns a random prime number, up to 10 digits in length."
+      tags: "Primes"
+    };
+  }
 }
 
-message PrimeRequest {
+message RandomRequest {
   int64 min = 1 [json_name="min", (validate.rules).int64.gte = 2];
   int64 max = 2 [json_name="max", (validate.rules).int64.lte = 9999999999];
 }
 
-message PrimeResponse {
+message RandomResponse {
   int64 prime = 1 [json_name="prime_number"];
+}
+
+message ListRequest {
+  int64 min = 1 [json_name="min", (validate.rules).int64.gte = 2];
+  int64 max = 2 [json_name="max", (validate.rules).int64.lte = 9999999999];
+  int64 max_results = 3 [json_name="max_results", (validate.rules).int64.lte = 5000, (validate.rules).int64.gte = 0];
+}
+
+message ListResponse {
+  repeated int64 primes = 1 [json_name="prime_numbers"];
 }
