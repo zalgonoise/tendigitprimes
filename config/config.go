@@ -19,12 +19,12 @@ type Server struct {
 }
 
 func New() (*Primes, error) {
-	var config Primes
+	config := &Primes{}
 
-	err := envconfig.Process("", &config)
+	err := envconfig.Process("", config)
 	if err != nil {
 		return nil, err
 	}
 
-	return &config, nil
+	return config, nil
 }
