@@ -15,6 +15,7 @@ import (
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
 	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/zalgonoise/tendigitprimes/database"
 	"github.com/zalgonoise/tendigitprimes/repository"
 	"github.com/zalgonoise/x/cli"
 	"google.golang.org/grpc"
@@ -47,7 +48,12 @@ func main() {
 func ExecService(ctx context.Context, logger *slog.Logger, args []string) (int, error) {
 	c, err := config.New()
 
-	repo, err := sqlite.NewRepository(c.Database.URI)
+	db, err := database.OpenSQLite(c.Database.URI, database.ReadOnlyPragmas(), logger)
+	if err != nil {
+		return 1, err
+	}
+
+	repo, err := sqlite.NewRepository(db)
 	if err != nil {
 		return 1, err
 	}
