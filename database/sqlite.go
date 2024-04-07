@@ -27,6 +27,14 @@ const (
 	) STRICT;
 `
 
+	createScopesTableQuery = `
+	CREATE TABLE scopes (
+	  id  TEXT PRIMARY KEY 	NOT NULL,
+    min INTEGER 			  	NOT NULL,
+    max INTEGER 			  	NOT NULL
+	) STRICT;
+`
+
 	createTableIndices = `
 	CREATE INDEX primes_0_to_1T ON primes (prime) WHERE prime < 1000000000;
 	CREATE INDEX primes_1T_to_2T ON primes (prime) WHERE prime BETWEEN 1000000000 AND 1999999999;
@@ -44,6 +52,11 @@ const (
 SELECT EXISTS(SELECT 1 FROM sqlite_master 
 	WHERE type='table' 
 	AND name='%s');
+`
+
+	insertScopesQuery = `
+INSERT INTO scopes (id, min, max)
+VALUES (?, ?, ?);
 `
 )
 

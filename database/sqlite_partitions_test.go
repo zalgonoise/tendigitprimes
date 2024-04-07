@@ -1,10 +1,29 @@
 package database
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"github.com/zalgonoise/tendigitprimes/log"
 )
+
+func TestBlocks(t *testing.T) {
+	logger := log.New("debug")
+
+	data, err := readDataDir(context.Background(), "testdata/raw", logger)
+	require.NoError(t, err)
+
+	blocks := prepareBlocks(data[len(data)-1], 50_000_000)
+
+	dataMap := mapBlocks(blocks, data)
+
+	for i := range blocks {
+		d := dataMap[blocks[i]]
+		require.GreaterOrEqual(t, d[0], blocks[i].from)
+		require.LessOrEqual(t, d[len(d)-1], blocks[i].to)
+	}
+}
 
 func TestPrepareBlocks(t *testing.T) {
 	for _, testcase := range []struct {

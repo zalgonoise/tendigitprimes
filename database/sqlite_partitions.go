@@ -2,14 +2,95 @@ package database
 
 import (
 	"context"
+	"database/sql"
 	"encoding/hex"
+	"fmt"
 	"log/slog"
+)
+
+const (
+	minAlloc = 64
+
+	pathBlock = "/blk_"
+
+	queryPartitionIDs = `
+	SELECT id FROM scopes;
+`
+
+	queryAttachDB = `ATTACH DATABASE '%s%s%s' as 'db%s';`
 )
 
 type block struct {
 	from int
 	to   int
 	id   string
+}
+
+func AttachSQLite(dir string, pragmas map[string]string, logger *slog.Logger) (*sql.DB, error) {
+	ctx := context.Background()
+
+	db, err := OpenSQLite(dir+"/index.db", pragmas, logger)
+	if err != nil {
+		return nil, err
+	}
+
+	ids, err := getIDs(ctx, db)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = attachDBs(ctx, db, dir, ids); err != nil {
+		return nil, err
+	}
+
+	return db, nil
+}
+
+func attachDBs(ctx context.Context, db *sql.DB, dir string, ids []string) error {
+	tx, err := db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+
+	defer tx.Rollback()
+
+	for i := range ids {
+		if _, err := tx.ExecContext(ctx, fmt.Sprintf(queryAttachDB, dir, pathBlock, ids[i], ids[i])); err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit()
+}
+
+func getIDs(ctx context.Context, db *sql.DB) ([]string, error) {
+	rows, err := db.QueryContext(ctx, queryPartitionIDs)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	ids := make([]string, 0, minAlloc)
+
+	for rows.Next() {
+		var id string
+
+		if err = rows.Scan(&id); err != nil {
+			return nil, err
+		}
+
+		ids = append(ids, id)
+	}
+
+	if err = rows.Close(); err != nil {
+		return nil, err
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return ids, nil
 }
 
 func Partition(ctx context.Context, blockSize int, input, dir string, logger *slog.Logger) error {
@@ -22,12 +103,23 @@ func Partition(ctx context.Context, blockSize int, input, dir string, logger *sl
 }
 
 func partitionData(ctx context.Context, data []int, blockSize int, path string, logger *slog.Logger) error {
+	idxDB, err := OpenSQLite(path+"/index.db", ReadWritePragmas(), logger)
+	if err != nil {
+		return err
+	}
+
+	if err = runMigrations(ctx, idxDB,
+		migration{table: "scopes", create: createScopesTableQuery},
+	); err != nil {
+		return err
+	}
+
 	blocks := prepareBlocks(len(data), blockSize)
 
 	dataMap := mapBlocks(blocks, data)
 
 	for i := range blocks {
-		db, err := OpenSQLite(path+"/blk_"+blocks[i].id+".db", ReadWritePragmas(), logger)
+		db, err := OpenSQLite(path+pathBlock+blocks[i].id+".db", ReadWritePragmas(), logger)
 		if err != nil {
 			return err
 		}
@@ -45,9 +137,13 @@ func partitionData(ctx context.Context, data []int, blockSize int, path string, 
 		if err = db.Close(); err != nil {
 			return err
 		}
+
+		if _, err = idxDB.ExecContext(ctx, insertScopesQuery, blocks[i].id, blocks[i].from, blocks[i].to); err != nil {
+			return err
+		}
 	}
 
-	return nil
+	return idxDB.Close()
 }
 
 func mapBlocks(blocks []block, data []int) map[block][]int {
@@ -56,8 +152,9 @@ func mapBlocks(blocks []block, data []int) map[block][]int {
 
 	dataMap := make(map[block][]int, len(blocks))
 	for i := range blocks {
-		var d []int
-		lastIdx, d = mapBlock(blocks[i], data[lastIdx:])
+		n, d := mapBlock(blocks[i], data[lastIdx:])
+
+		lastIdx += n
 
 		dataMap[blocks[i]] = d
 	}
@@ -80,17 +177,17 @@ func mapBlock(b block, data []int) (int, []int) {
 	return -1, d
 }
 
-func prepareBlocks(length int, blockSize int) []block {
-	blocks := (length / blockSize) + 1
+func prepareBlocks(maximum, blockSize int) []block {
+	blocks := (maximum / blockSize) + 1
 
 	values := make([]block, 0, blocks)
 
 	id := make([]byte, (blocks/255)+1)
 
-	for i := 0; i < length; i += blockSize {
+	for i := 0; i < maximum; i += blockSize {
 		to := i + blockSize - 1
-		if to > length {
-			to = length
+		if to > maximum {
+			to = maximum
 		}
 
 		values = append(values, block{
