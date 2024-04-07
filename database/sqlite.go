@@ -25,7 +25,9 @@ const (
 	CREATE TABLE primes (
     prime INTEGER PRIMARY KEY NOT NULL 
 	) STRICT;
+`
 
+	createTableIndices = `
 	CREATE INDEX primes_0_to_1T ON primes (prime) WHERE prime < 1000000000;
 	CREATE INDEX primes_1T_to_2T ON primes (prime) WHERE prime BETWEEN 1000000000 AND 1999999999;
 	CREATE INDEX primes_2T_to_3T ON primes (prime) WHERE prime BETWEEN 2000000000 AND 2999999999;
@@ -37,10 +39,6 @@ const (
 	CREATE INDEX primes_8T_to_9T ON primes (prime) WHERE prime BETWEEN 8000000000 AND 8999999999;
 	CREATE INDEX primes_9T_to_10T ON primes (prime) WHERE prime BETWEEN 9000000000 AND 9999999999;
 `
-
-	insertValueQuery = `
-INSERT INTO primes (prime) 
-	VALUES (?);`
 
 	checkTableExists = `
 SELECT EXISTS(SELECT 1 FROM sqlite_master 
