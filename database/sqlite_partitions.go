@@ -24,28 +24,7 @@ func Partition(ctx context.Context, blockSize int, input, dir string, logger *sl
 func partitionData(ctx context.Context, data []int, blockSize int, path string, logger *slog.Logger) error {
 	blocks := prepareBlocks(len(data), blockSize)
 
-	// data should already be sorted
-	var lastIdx int
-
-	dataMap := make(map[block][]int, len(blocks))
-	for i := range blocks {
-		d := make([]int, 0, len(data))
-		b := blocks[i]
-
-		for idx := lastIdx; idx < len(data); idx++ {
-			if data[idx] >= b.from && data[idx] <= b.to {
-				d = append(d, data[idx])
-			}
-
-			if data[idx] >= b.to {
-				lastIdx = idx
-
-				break
-			}
-		}
-
-		dataMap[blocks[i]] = d
-	}
+	dataMap := mapBlocks(blocks, data)
 
 	for i := range blocks {
 		db, err := OpenSQLite(path+"/blk_"+blocks[i].id+".db", ReadWritePragmas(), logger)
@@ -69,6 +48,36 @@ func partitionData(ctx context.Context, data []int, blockSize int, path string, 
 	}
 
 	return nil
+}
+
+func mapBlocks(blocks []block, data []int) map[block][]int {
+	// data should already be sorted
+	var lastIdx int
+
+	dataMap := make(map[block][]int, len(blocks))
+	for i := range blocks {
+		var d []int
+		lastIdx, d = mapBlock(blocks[i], data[lastIdx:])
+
+		dataMap[blocks[i]] = d
+	}
+
+	return dataMap
+}
+
+func mapBlock(b block, data []int) (int, []int) {
+	d := make([]int, 0, len(data))
+
+	for i := range data {
+		switch {
+		case data[i] <= b.to:
+			d = append(d, data[i])
+		default:
+			return i, d
+		}
+	}
+
+	return -1, d
 }
 
 func prepareBlocks(length int, blockSize int) []block {
