@@ -114,7 +114,7 @@ func partitionData(ctx context.Context, data []int, blockSize int, path string, 
 		return err
 	}
 
-	blocks := prepareBlocks(len(data), blockSize)
+	blocks := prepareBlocks(data[len(data)-1], blockSize)
 
 	dataMap := mapBlocks(blocks, data)
 
