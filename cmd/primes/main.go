@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -47,21 +48,43 @@ func main() {
 
 func ExecService(ctx context.Context, logger *slog.Logger, args []string) (int, error) {
 	c, err := config.New()
-
-	db, err := database.OpenSQLite(c.Database.URI, database.ReadOnlyPragmas(), logger)
 	if err != nil {
 		return 1, err
 	}
 
-	repo, err := sqlite.NewRepository(db)
-	if err != nil {
-		return 1, err
+	var (
+		db   *sql.DB
+		repo primes.Repository
+	)
+
+	switch c.Database.Partitioned {
+	case true:
+		var conn *sql.Conn
+		db, conn, err = database.AttachSQLite(c.Database.URI, database.ReadOnlyPragmas(), logger)
+		if err != nil {
+			return 1, err
+		}
+
+		repo, err = sqlite.NewPartitionSet(db, conn)
+		if err != nil {
+			return 1, err
+		}
+	default:
+		db, err = database.OpenSQLite(c.Database.URI, database.ReadOnlyPragmas(), logger)
+		if err != nil {
+			return 1, err
+		}
+
+		repo, err = sqlite.NewRepository(db)
+		if err != nil {
+			return 1, err
+		}
 	}
 
 	logger = log.From(c.LogLevel, logger.Handler())
 	m := metrics.NewMetrics()
-	m.RegisterCollector(collectors.NewDBStatsCollector(repo.DB, "primes"))
-	m.RegisterCollector(repository.NewPingCollector(repo.DB, "primes"))
+	m.RegisterCollector(collectors.NewDBStatsCollector(db, "primes"))
+	m.RegisterCollector(repository.NewPingCollector(db, "primes"))
 	m.InitRequestsMetrics("2", "9999999999")
 
 	service := primes.NewService(repo, logger, m)
