@@ -6,10 +6,15 @@ import (
 	"encoding/hex"
 	"fmt"
 	"log/slog"
+
+	"modernc.org/sqlite"
 )
 
 const (
-	minAlloc = 64
+	minAlloc              = 64
+	sqliteAttachHardLimit = 125
+
+	limitSQLITE_LIMIT_ATTACHED = 7
 
 	pathBlock = "/blk_"
 
@@ -26,41 +31,55 @@ type block struct {
 	id   string
 }
 
-func AttachSQLite(dir string, pragmas map[string]string, logger *slog.Logger) (*sql.DB, error) {
+func AttachSQLite(dir string, pragmas map[string]string, logger *slog.Logger) (*sql.DB, *sql.Conn, error) {
 	ctx := context.Background()
 
 	db, err := OpenSQLite(dir+"/index.db", pragmas, logger)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	ids, err := getIDs(ctx, db)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	if err = attachDBs(ctx, db, dir, ids); err != nil {
-		return nil, err
+	conn, err := attachDBs(ctx, db, dir, ids)
+	if err != nil {
+		return nil, nil, err
 	}
 
-	return db, nil
+	return db, conn, nil
 }
 
-func attachDBs(ctx context.Context, db *sql.DB, dir string, ids []string) error {
-	tx, err := db.BeginTx(ctx, nil)
+func attachDBs(ctx context.Context, db *sql.DB, dir string, ids []string) (*sql.Conn, error) {
+	conn, err := db.Conn(ctx)
 	if err != nil {
-		return err
+		return nil, err
+	}
+
+	if _, err = sqlite.Limit(conn, limitSQLITE_LIMIT_ATTACHED, len(ids)); err != nil {
+		return nil, err
+	}
+
+	tx, err := conn.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
 	}
 
 	defer tx.Rollback()
 
 	for i := range ids {
 		if _, err := tx.ExecContext(ctx, fmt.Sprintf(queryAttachDB, dir, pathBlock, ids[i], ids[i])); err != nil {
-			return err
+			return nil, err
 		}
 	}
 
-	return tx.Commit()
+	if err = tx.Commit(); err != nil {
+		return nil, err
+	}
+
+	return conn, nil
 }
 
 func getIDs(ctx context.Context, db *sql.DB) ([]string, error) {
@@ -115,6 +134,10 @@ func partitionData(ctx context.Context, data []int, blockSize int, path string, 
 	}
 
 	blocks := prepareBlocks(data[len(data)-1], blockSize)
+
+	if len(blocks) > sqliteAttachHardLimit {
+		return fmt.Errorf("number of generated partitions is over the SQLite limit for attaching databases (%d): len: %d", sqliteAttachHardLimit, len(blocks))
+	}
 
 	dataMap := mapBlocks(blocks, data)
 
