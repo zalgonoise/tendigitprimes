@@ -73,6 +73,14 @@ func (r Repository) List(ctx context.Context, min, max, limit int64) ([]int64, e
 		ns = append(ns, n)
 	}
 
+	if err = rows.Close(); err != nil {
+		return nil, err
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
 	return ns, nil
 }
 
