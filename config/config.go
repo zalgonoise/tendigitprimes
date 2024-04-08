@@ -10,7 +10,8 @@ type Primes struct {
 }
 
 type Database struct {
-	URI string `envconfig:"PRIMES_DB_URI"`
+	URI         string `envconfig:"PRIMES_DB_URI"`
+	Partitioned bool   `envconfig:"PRIMES_DB_IS_PARTITIONED"`
 }
 
 type Server struct {
