@@ -50,7 +50,9 @@ func run(logger *slog.Logger) (int, error) {
 			return 1, err
 		}
 
-		return 0, nil
+		return 0,
+
+			nil
 	}
 
 	if err := database.Partition(ctx, 100_000_000, *input, *output, logger); err != nil {
