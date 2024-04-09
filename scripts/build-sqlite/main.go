@@ -31,20 +31,29 @@ func run(logger *slog.Logger) (int, error) {
 	ctx := context.Background()
 	input := flag.String("i", "./raw", "path to the input data to consume. Default is './input'")
 	output := flag.String("o", "./sqlite/primes.db", "path to place the sqlite file in. Default is './sqlite/primes.db'")
+	partition := flag.Bool("p", false, "partition database in multiple files")
 
 	flag.Parse()
 
-	logger.InfoContext(ctx, "validating output URI")
-	db, err := database.OpenSQLite(*output, database.ReadWritePragmas(), logger)
-	if err != nil {
-		return 1, err
+	if !*partition {
+		logger.InfoContext(ctx, "validating output URI")
+		db, err := database.OpenSQLite(*output, database.ReadWritePragmas(), logger)
+		if err != nil {
+			return 1, err
+		}
+
+		if err = database.MigrateSQLite(ctx, db, *input, logger); err != nil {
+			return 1, err
+		}
+
+		if err = db.Close(); err != nil {
+			return 1, err
+		}
+
+		return 0, nil
 	}
 
-	if err = database.MigrateSQLite(ctx, db, *input, logger); err != nil {
-		return 1, err
-	}
-
-	if err = db.Close(); err != nil {
+	if err := database.Partition(ctx, 100_000_000, *input, *output, logger); err != nil {
 		return 1, err
 	}
 
