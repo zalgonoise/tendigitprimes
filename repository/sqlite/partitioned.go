@@ -11,17 +11,17 @@ const (
 	minAlloc = 64
 
 	querySelectScopes = `
-	SELECT id, from, to FROM scopes;
+	SELECT id, min, max FROM scopes;
 `
 
 	primesPartitionedQuery = `
-		SELECT prime FROM db%s.primes
-			WHERE prime BETWEEN ? AND ?
+		SELECT prime FROM 'db%s.primes' AS p
+			WHERE p.prime BETWEEN ? AND ?
 `
 
 	primesPartitionedLimitQuery = `
-		SELECT prime FROM db%s.primes
-			WHERE prime BETWEEN ? AND ?
+		SELECT prime FROM 'db%s.primes' AS p
+			WHERE p.prime BETWEEN ? AND ?
 			LIMIT %d
 `
 )
@@ -40,17 +40,12 @@ type PartitionSet struct {
 }
 
 func (r *PartitionSet) Random(ctx context.Context, min, max int64) (int64, error) {
-	targets := make([]partition, 0, len(r.parts))
-
-	for i := range r.parts {
-		if contains(r.parts[i], min, max) {
-			targets = append(targets, r.parts[i])
-		}
-	}
+	targets := scanPartitions(r.parts, min, max)
 
 	t := targets[rand.IntN(len(targets))]
 
-	rows, err := r.Conn.QueryContext(ctx, fmt.Sprintf(primesPartitionedQuery, t.id), min, max)
+	q := fmt.Sprintf(primesPartitionedQuery, t.id)
+	rows, err := r.Conn.QueryContext(ctx, q, min, max)
 	if err != nil {
 		return 0, err
 	}
@@ -76,15 +71,26 @@ func (r *PartitionSet) List(ctx context.Context, min, max, limit int64) ([]int64
 		limit = defaultLimit
 	}
 
-	targets := make([]partition, 0, len(r.parts))
+	targets := scanPartitions(r.parts, min, max)
 
-	for i := range r.parts {
-		if contains(r.parts[i], min, max) {
-			targets = append(targets, r.parts[i])
+	return listPrimes(ctx, r.Conn, targets, min, max, limit)
+}
+
+func scanPartitions(parts []partition, min, max int64) []partition {
+	targets := make([]partition, 0, len(parts))
+
+	for i := range parts {
+		isPresent, isOver := contains(parts[i], min, max)
+		if isPresent {
+			targets = append(targets, parts[i])
+		}
+
+		if isOver {
+			break
 		}
 	}
 
-	return listPrimes(ctx, r.Conn, targets, min, max, limit)
+	return targets
 }
 
 func listPrimes(ctx context.Context, db *sql.Conn, targets []partition, min, max, limit int64) ([]int64, error) {
@@ -171,11 +177,13 @@ func getPartitions(db *sql.Conn) ([]partition, error) {
 	return parts, nil
 }
 
-func contains(part partition, min, max int64) bool {
+func contains(part partition, min, max int64) (isPresent bool, isOver bool) {
 	switch {
-	case min >= part.to, max <= part.from:
-		return false
+	case part.from > max:
+		return false, true
+	case min >= part.to:
+		return false, false
 	default:
-		return true
+		return true, false
 	}
 }
