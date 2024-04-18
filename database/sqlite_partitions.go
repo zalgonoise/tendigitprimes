@@ -8,13 +8,12 @@ import (
 	"log/slog"
 
 	"modernc.org/sqlite"
+	sqlite3 "modernc.org/sqlite/lib"
 )
 
 const (
 	minAlloc              = 64
 	sqliteAttachHardLimit = 125
-
-	limitSQLITE_LIMIT_ATTACHED = 7
 
 	pathBlock = "/blk_"
 
@@ -22,7 +21,7 @@ const (
 	SELECT id FROM scopes;
 `
 
-	queryAttachDB = `ATTACH DATABASE '%s%s%s' as 'db%s';`
+	queryAttachDB = `ATTACH DATABASE '%s%s%s.db' AS db%s;`
 )
 
 type block struct {
@@ -58,7 +57,7 @@ func attachDBs(ctx context.Context, db *sql.DB, dir string, ids []string) (*sql.
 		return nil, err
 	}
 
-	if _, err = sqlite.Limit(conn, limitSQLITE_LIMIT_ATTACHED, len(ids)); err != nil {
+	if _, err = sqlite.Limit(conn, sqlite3.SQLITE_LIMIT_ATTACHED, len(ids)); err != nil {
 		return nil, err
 	}
 
@@ -79,6 +78,9 @@ func attachDBs(ctx context.Context, db *sql.DB, dir string, ids []string) (*sql.
 		return nil, err
 	}
 
+	// TODO: the attached databases get lost as the transaction is committed, and
+	// 	queries against this connection will result in the attached databases not being visible
+	//  Needs to return a SQL querier that has access to all attached DBs
 	return conn, nil
 }
 

@@ -8,12 +8,13 @@ import (
 	"log/slog"
 	"os"
 
+	_ "github.com/mattn/go-sqlite3"
 	_ "modernc.org/sqlite"
 )
 
 const (
-	driver   = "sqlite"
-	maxAlloc = 5_000_000
+	sqlDriver = "sqlite"
+	maxAlloc  = 5_000_000
 
 	uriFormat = "file:%s?_readonly=true&_txlock=immediate&cache=shared"
 	inMemory  = ":memory:"
@@ -75,7 +76,7 @@ func OpenSQLite(uri string, pragmas map[string]string, logger *slog.Logger) (*sq
 		pragmas = ReadWritePragmas()
 	}
 
-	db, err := sql.Open(driver, fmt.Sprintf(uriFormat, uri))
+	db, err := sql.Open(sqlDriver, fmt.Sprintf(uriFormat, uri))
 	if err != nil {
 		return nil, err
 	}
