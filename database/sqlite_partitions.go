@@ -17,9 +17,7 @@ const (
 
 	pathBlock = "/blk_"
 
-	queryPartitionIDs = `
-	SELECT id FROM scopes;
-`
+	queryPartitionIDs = `SELECT id FROM scopes;`
 
 	queryAttachDB = `ATTACH DATABASE '%s%s%s.db' AS db%s;`
 )
@@ -78,9 +76,6 @@ func attachDBs(ctx context.Context, db *sql.DB, dir string, ids []string) (*sql.
 		return nil, err
 	}
 
-	// TODO: the attached databases get lost as the transaction is committed, and
-	// 	queries against this connection will result in the attached databases not being visible
-	//  Needs to return a SQL querier that has access to all attached DBs
 	return conn, nil
 }
 
