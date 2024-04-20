@@ -3,6 +3,7 @@ package sqlite
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"math/rand/v2"
 )
@@ -10,20 +11,14 @@ import (
 const (
 	minAlloc = 64
 
-	querySelectScopes = `
-	SELECT id, min, max FROM scopes;
-`
+	querySelectScopes = `SELECT id, min, max FROM scopes;`
 
-	primesPartitionedQuery = `
-		SELECT prime FROM 'db%s.primes' AS p
-			WHERE p.prime BETWEEN ? AND ?
-`
+	primesPartitionedQuery = `SELECT prime FROM db%s.primes AS p 
+	WHERE p.prime BETWEEN ? AND ?;`
 
-	primesPartitionedLimitQuery = `
-		SELECT prime FROM 'db%s.primes' AS p
-			WHERE p.prime BETWEEN ? AND ?
-			LIMIT %d
-`
+	primesPartitionedLimitQuery = `SELECT prime FROM db%s.primes AS p
+	WHERE p.prime BETWEEN ? AND ?
+	LIMIT %d`
 )
 
 type partition struct {
@@ -76,6 +71,10 @@ func (r *PartitionSet) List(ctx context.Context, min, max, limit int64) ([]int64
 	return listPrimes(ctx, r.Conn, targets, min, max, limit)
 }
 
+func (r *PartitionSet) Close() error {
+	return errors.Join(r.Conn.Close(), r.DB.Close())
+}
+
 func scanPartitions(parts []partition, min, max int64) []partition {
 	targets := make([]partition, 0, len(parts))
 
@@ -93,11 +92,11 @@ func scanPartitions(parts []partition, min, max int64) []partition {
 	return targets
 }
 
-func listPrimes(ctx context.Context, db *sql.Conn, targets []partition, min, max, limit int64) ([]int64, error) {
+func listPrimes(ctx context.Context, conn *sql.Conn, targets []partition, min, max, limit int64) ([]int64, error) {
 	results := make([]int64, 0, limit)
 
 	for i := range targets {
-		rows, err := db.QueryContext(ctx, fmt.Sprintf(primesPartitionedLimitQuery, targets[i].id, limit), min, max)
+		rows, err := conn.QueryContext(ctx, fmt.Sprintf(primesPartitionedLimitQuery, targets[i].id, limit), min, max)
 		if err != nil {
 			return nil, err
 		}
@@ -139,8 +138,8 @@ func NewPartitionSet(db *sql.DB, conn *sql.Conn) (*PartitionSet, error) {
 	return &PartitionSet{parts: parts, DB: db, Conn: conn}, nil
 }
 
-func getPartitions(db *sql.Conn) ([]partition, error) {
-	rows, err := db.QueryContext(context.Background(), querySelectScopes)
+func getPartitions(conn *sql.Conn) ([]partition, error) {
+	rows, err := conn.QueryContext(context.Background(), querySelectScopes)
 	if err != nil {
 		return nil, err
 	}
