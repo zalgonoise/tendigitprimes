@@ -30,23 +30,11 @@ const (
 
 	createScopesTableQuery = `
 	CREATE TABLE scopes (
-	  id  TEXT PRIMARY KEY 	NOT NULL,
-    min INTEGER 			  	NOT NULL,
-    max INTEGER 			  	NOT NULL
+	  id  	TEXT PRIMARY KEY 	NOT NULL,
+    min 	INTEGER 			  	NOT NULL,
+    max 	INTEGER 			  	NOT NULL,
+    total INTEGER						NOT NULL
 	) STRICT;
-`
-
-	createTableIndices = `
-	CREATE INDEX primes_0_to_1T ON primes (prime) WHERE prime < 1000000000;
-	CREATE INDEX primes_1T_to_2T ON primes (prime) WHERE prime BETWEEN 1000000000 AND 1999999999;
-	CREATE INDEX primes_2T_to_3T ON primes (prime) WHERE prime BETWEEN 2000000000 AND 2999999999;
-	CREATE INDEX primes_3T_to_4T ON primes (prime) WHERE prime BETWEEN 3000000000 AND 3999999999;
-	CREATE INDEX primes_4T_to_5T ON primes (prime) WHERE prime BETWEEN 4000000000 AND 4999999999;
-	CREATE INDEX primes_5T_to_6T ON primes (prime) WHERE prime BETWEEN 5000000000 AND 5999999999;
-	CREATE INDEX primes_6T_to_7T ON primes (prime) WHERE prime BETWEEN 6000000000 AND 6999999999;
-	CREATE INDEX primes_7T_to_8T ON primes (prime) WHERE prime BETWEEN 7000000000 AND 7999999999;
-	CREATE INDEX primes_8T_to_9T ON primes (prime) WHERE prime BETWEEN 8000000000 AND 8999999999;
-	CREATE INDEX primes_9T_to_10T ON primes (prime) WHERE prime BETWEEN 9000000000 AND 9999999999;
 `
 
 	checkTableExists = `
@@ -56,8 +44,8 @@ SELECT EXISTS(SELECT 1 FROM sqlite_master
 `
 
 	insertScopesQuery = `
-INSERT INTO scopes (id, min, max)
-VALUES (?, ?, ?);
+INSERT INTO scopes (id, min, max, total)
+VALUES (?, ?, ?, ?);
 `
 )
 

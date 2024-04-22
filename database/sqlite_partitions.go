@@ -28,6 +28,19 @@ type block struct {
 	id   string
 }
 
+// AttachSQLite opens a connection to 'index.db' under dir, and queries for all IDs registered in it; which are used to
+// attach the database partitions under dir.
+//
+// Note that SQLite sets a maximum number of 10 attached databases by default, but can be modified as a compile-time
+// option, up to a maximum of 125 databases.
+//
+// In the context of modernc.org/sqlite, one can use Go workspaces to modify a local copy of the repository, where the
+// appropriate configuration is found:
+//
+//	const SQLITE_MAX_ATTACHED = 100
+//
+// Then, it is possible to attach a hundred SQLite databases on the same index, making the partitions usable. The hard
+// limit is 125 databases: https://www.sqlite.org/limits.html#max_attached
 func AttachSQLite(dir string, pragmas map[string]string, logger *slog.Logger) (*sql.DB, *sql.Conn, error) {
 	ctx := context.Background()
 
@@ -109,6 +122,19 @@ func getIDs(ctx context.Context, db *sql.DB) ([]string, error) {
 	return ids, nil
 }
 
+// Partition consumes the data in input, and creates partitioned SQLite databases in dir, with a given blockSize size.
+//
+// Different blockSize values result in different number of partitions. Note that SQLite has configured a maximum of 10
+// attached databases at a time by default. In order to have access to the maximum amount of 125 databases, SQLite must
+// be compiled with this maximum.
+//
+// In the context of modernc.org/sqlite, one can use Go workspaces to modify a local copy of the repository, where the
+// appropriate configuration is found:
+//
+//	const SQLITE_MAX_ATTACHED = 100
+//
+// Then, it is possible to attach a hundred SQLite databases on the same index, making the partitions usable. The hard
+// limit is 125 databases: https://www.sqlite.org/limits.html#max_attached
 func Partition(ctx context.Context, blockSize int, input, dir string, logger *slog.Logger) error {
 	data, err := readDataDir(ctx, input, logger)
 	if err != nil {
@@ -158,7 +184,7 @@ func partitionData(ctx context.Context, data []int, blockSize int, path string, 
 			return err
 		}
 
-		if _, err = idxDB.ExecContext(ctx, insertScopesQuery, blocks[i].id, blocks[i].from, blocks[i].to); err != nil {
+		if _, err = idxDB.ExecContext(ctx, insertScopesQuery, blocks[i].id, blocks[i].from, blocks[i].to, len(dataMap[blocks[i]])); err != nil {
 			return err
 		}
 	}
