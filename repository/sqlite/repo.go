@@ -84,6 +84,10 @@ func (r Repository) List(ctx context.Context, min, max, limit int64) ([]int64, e
 	return ns, nil
 }
 
+func (r Repository) Close() error {
+	return r.DB.Close()
+}
+
 func NewRepository(db *sql.DB) (Repository, error) {
 	return Repository{db}, nil
 }
