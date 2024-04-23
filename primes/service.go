@@ -21,6 +21,7 @@ const (
 type Repository interface {
 	Random(ctx context.Context, min, max int64) (int64, error)
 	List(ctx context.Context, min, max, limit int64) ([]int64, error)
+	Close() error
 }
 
 type Metrics interface {
