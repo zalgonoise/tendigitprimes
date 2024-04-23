@@ -46,6 +46,12 @@ func main() {
 	cli.Run(runner)
 }
 
+type Repository interface {
+	Random(ctx context.Context, min, max int64) (int64, error)
+	List(ctx context.Context, min, max, limit int64) ([]int64, error)
+	Close() error
+}
+
 func ExecService(ctx context.Context, logger *slog.Logger, args []string) (int, error) {
 	c, err := config.New()
 	if err != nil {
@@ -54,7 +60,7 @@ func ExecService(ctx context.Context, logger *slog.Logger, args []string) (int, 
 
 	var (
 		db   *sql.DB
-		repo primes.Repository
+		repo Repository
 	)
 
 	switch c.Database.Partitioned {
@@ -105,7 +111,7 @@ func ExecService(ctx context.Context, logger *slog.Logger, args []string) (int, 
 
 	go runHTTPServer(ctx, logger, &c.Server, server)
 
-	return shutdown(server, grpcServer)
+	return shutdown(server, grpcServer, repo)
 }
 
 func registerMetrics(
@@ -205,6 +211,7 @@ func runHTTPServer(
 func shutdown(
 	httpServer *httpserver.Server,
 	gRPCServer *grpcserver.Server,
+	repo primes.Repository,
 ) (int, error) {
 	signalChannel := make(chan os.Signal, 1)
 	signal.Notify(signalChannel, os.Interrupt, syscall.SIGTERM)
@@ -219,6 +226,10 @@ func shutdown(
 	}
 
 	gRPCServer.Shutdown()
+
+	if err := repo.Close(); err != nil {
+		return 1, err
+	}
 
 	return 0, nil
 }
