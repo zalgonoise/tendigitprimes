@@ -219,7 +219,7 @@ You can issue HTTP GET requests to both fetch a random prime or a list of them:
 
 ### Random
 
-This RPC returns a single random prime number, and allows (min-max) limits:
+This RPC returns a random prime number up to 10 digits in length:
 
 ```http request
 GET /v1/primes/rand?min=1000000000&max=5000000000
@@ -239,7 +239,7 @@ Example response:
 
 ### List
 
-This RPC returns a single random prime number, and allows (min-max) limits:
+This RPC returns a set of prime numbers up to 10 digits in length:
 
 ```http request
 GET /v1/primes?min=1000000000&max=5000000000&max_results=10
