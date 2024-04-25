@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/kelseyhightower/envconfig"
 )
@@ -14,16 +15,16 @@ const minBlockSize = 100_000_000
 var ErrBlockSizeTooLow = errors.New("block size value is too low")
 
 type Build struct {
-	Input       string `envconfig:"PRIMES_BUILD_INPUT"`
-	Output      string `envconfig:"PRIMES_BUILD_OUTPUT"`
-	Partitioned bool   `envconfig:"PRIMES_BUILD_IS_PARTITIONED"`
-	BlockSize   int    `envconfig:"PRIMES_BUILD_BLOCK_SIZE" `
+	Input       string    `envconfig:"PRIMES_BUILD_INPUT"`
+	Output      string    `envconfig:"PRIMES_BUILD_OUTPUT"`
+	Partitioned bool      `envconfig:"PRIMES_BUILD_IS_PARTITIONED"`
+	BlockSize   BlockSize `envconfig:"PRIMES_BUILD_BLOCK_SIZE" `
 }
 
 type BlockSize int
 
 func (b *BlockSize) Decode(value string) error {
-	n, err := strconv.Atoi(value)
+	n, err := strconv.Atoi(strings.ReplaceAll(value, "_", ""))
 	if err != nil {
 		return err
 	}
@@ -78,7 +79,7 @@ func flagsBuild(args []string) (*Build, error) {
 	}
 
 	if *blockSize >= minBlockSize {
-		config.BlockSize = *blockSize
+		config.BlockSize = BlockSize(*blockSize)
 	}
 
 	return config, nil
