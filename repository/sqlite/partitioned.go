@@ -29,48 +29,42 @@ type partition struct {
 type PartitionSet struct {
 	parts []partition
 
-	DB   *sql.DB
-	Conn *sql.Conn
+	DB *sql.DB
 }
 
 func (r *PartitionSet) Random(ctx context.Context, min, max int64) (int64, error) {
-	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
-	defer cancel()
-
 	targets := scanPartitions(r.parts, min, max)
 
 	t := targets[rand.IntN(len(targets))]
 
-	var n int64
-	var err error
+	return randomPrimeInRange(ctx, r.DB, t, min, max)
+}
 
-	for {
-		n, err = randomPrime(ctx, r.Conn, t)
-		if err != nil {
-			return 0, err
-		}
-
-		if n >= min && n <= max {
-			return n, nil
-		}
+func randomPrimeInRange(ctx context.Context, db *sql.DB, target partition, min, max int64) (int64, error) {
+	n, err := randomPrime(ctx, db, target)
+	if err != nil {
+		return 0, err
 	}
+
+	if n < min || n > max {
+		return randomPrimeInRange(ctx, db, target, min, max)
+	}
+
+	return n, nil
 }
 
 func (r *PartitionSet) List(ctx context.Context, min, max, limit int64) ([]int64, error) {
-	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
-	defer cancel()
-
 	if limit == 0 {
 		limit = defaultLimit
 	}
 
 	targets := scanPartitions(r.parts, min, max)
 
-	return listRandomPrimes(ctx, r.Conn, targets, min, max, int(limit))
+	return listRandomPrimes(ctx, r.DB, targets, min, max, int(limit))
 }
 
 func (r *PartitionSet) Close() error {
-	return errors.Join(r.Conn.Close(), r.DB.Close())
+	return errors.Join(r.DB.Close())
 }
 
 func scanPartitions(parts []partition, min, max int64) []partition {
@@ -90,20 +84,18 @@ func scanPartitions(parts []partition, min, max int64) []partition {
 	return targets
 }
 
-func listRandomPrimes(ctx context.Context, conn *sql.Conn, targets []partition, min, max int64, limit int) ([]int64, error) {
+func listRandomPrimes(ctx context.Context, db *sql.DB, targets []partition, min, max int64, limit int) ([]int64, error) {
 	results := make([]int64, 0, limit)
 
 	var idx int
 
 	for len(results) < limit {
-		n, err := randomPrime(ctx, conn, targets[idx])
+		n, err := randomPrimeInRange(ctx, db, targets[idx], min, max)
 		if err != nil {
 			return nil, err
 		}
 
-		if n >= min && n <= max {
-			results = append(results, n)
-		}
+		results = append(results, n)
 
 		idx = (idx + rand.IntN(len(targets))) % len(targets)
 	}
@@ -111,12 +103,12 @@ func listRandomPrimes(ctx context.Context, conn *sql.Conn, targets []partition, 
 	return results, nil
 }
 
-func randomPrime(ctx context.Context, conn *sql.Conn, target partition) (int64, error) {
+func randomPrime(ctx context.Context, db *sql.DB, target partition) (int64, error) {
 	offset := rand.Int64N(target.total - 1)
 
 	query := fmt.Sprintf(primesPartitionedQuery, target.id, offset)
 
-	row := conn.QueryRowContext(ctx, query)
+	row := db.QueryRowContext(ctx, query)
 
 	var n int64
 
@@ -131,19 +123,19 @@ func randomPrime(ctx context.Context, conn *sql.Conn, target partition) (int64, 
 	return n, nil
 }
 
-func NewPartitionSet(db *sql.DB, conn *sql.Conn) (*PartitionSet, error) {
-	parts, err := getPartitions(conn)
+func NewPartitionSet(db *sql.DB) (*PartitionSet, error) {
+	parts, err := getPartitions(db)
 	if err != nil {
 		return nil, err
 	}
 
-	return &PartitionSet{parts: parts, DB: db, Conn: conn}, nil
+	return &PartitionSet{parts: parts, DB: db}, nil
 }
 
-func getPartitions(conn *sql.Conn) ([]partition, error) {
+func getPartitions(db *sql.DB) ([]partition, error) {
 	ctx := context.Background()
 
-	rows, err := conn.QueryContext(ctx, querySelectScopes)
+	rows, err := db.QueryContext(ctx, querySelectScopes)
 	if err != nil {
 		return nil, err
 	}
@@ -184,9 +176,9 @@ func getPartitions(conn *sql.Conn) ([]partition, error) {
 
 func contains(part partition, min, max int64) (isPresent bool, isOver bool) {
 	switch {
-	case part.from > max:
+	case part.from > max-1:
 		return false, true
-	case part.to < min:
+	case part.to < min+1:
 		return false, false
 	default:
 		return true, false
