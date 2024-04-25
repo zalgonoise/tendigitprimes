@@ -150,7 +150,7 @@ ____________
 # Usage
 
 > You can take a closer look into the `cmd/primes` directory for builder runtime logic, but this guide will
-> focus on creating a partitioned SQLite instance just like the final version I described in [Growth](#growth)
+> focus on creating a partitioned SQLite instance just like the final version I described in [Challenges](#challenges)
 
 ## Generate SQLite databases from the raw data
 
@@ -215,7 +215,7 @@ PRIMES_DB_URI=~/path/to/my/parts PRIMES_DB_IS_PARTITIONED=1 go run ./cmd/primes 
 
 ## Using the service
 
-[Check out the full Swagger spec for this API](./api/openapi/primes/v1/primes.swagger.html)
+[Check out the full Swagger spec for this API](https://htmlpreview.github.io/?https://github.com/zalgonoise/tendigitprimes/blob/master/api/openapi/primes/v1/primes.swagger.html)
 
 You can issue HTTP GET requests to both fetch a random prime or a list of them:
 
