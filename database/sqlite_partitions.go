@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"log/slog"
+	"time"
 
 	"modernc.org/sqlite"
 	sqlite3 "modernc.org/sqlite/lib"
@@ -136,12 +137,20 @@ func getIDs(ctx context.Context, db *sql.DB) ([]string, error) {
 // Then, it is possible to attach a hundred SQLite databases on the same index, making the partitions usable. The hard
 // limit is 125 databases: https://www.sqlite.org/limits.html#max_attached
 func Partition(ctx context.Context, blockSize int, input, dir string, logger *slog.Logger) error {
+	start := time.Now()
+
 	data, err := readDataDir(ctx, input, logger)
 	if err != nil {
 		return err
 	}
 
-	return partitionData(ctx, data, blockSize, dir, logger)
+	if err := partitionData(ctx, data, blockSize, dir, logger); err != nil {
+		return err
+	}
+
+	logger.InfoContext(ctx, "operation completed", slog.Duration("time_elapsed", time.Since(start)))
+
+	return nil
 }
 
 func partitionData(ctx context.Context, data []int, blockSize int, path string, logger *slog.Logger) error {
@@ -165,7 +174,11 @@ func partitionData(ctx context.Context, data []int, blockSize int, path string, 
 	dataMap := mapBlocks(blocks, data)
 
 	for i := range blocks {
-		db, err := OpenSQLite(path+pathBlock+blocks[i].id+".db", ReadWritePragmas(), logger)
+		uri := path + pathBlock + blocks[i].id + ".db"
+		logger.InfoContext(ctx, "preparing block",
+			slog.String("uri", uri), slog.Int("from", blocks[i].from), slog.Int("to", blocks[i].to))
+
+		db, err := OpenSQLite(uri, ReadWritePragmas(), logger)
 		if err != nil {
 			return err
 		}
@@ -184,7 +197,10 @@ func partitionData(ctx context.Context, data []int, blockSize int, path string, 
 			return err
 		}
 
-		if _, err = idxDB.ExecContext(ctx, insertScopesQuery, blocks[i].id, blocks[i].from, blocks[i].to, len(dataMap[blocks[i]])); err != nil {
+		logger.InfoContext(ctx, "adding scopes to index.db")
+
+		if _, err = idxDB.ExecContext(
+			ctx, insertScopesQuery, blocks[i].id, blocks[i].from, blocks[i].to, len(dataMap[blocks[i]])); err != nil {
 			return err
 		}
 	}

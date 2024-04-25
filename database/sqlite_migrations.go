@@ -11,6 +11,7 @@ import (
 	"path"
 	"strconv"
 	"strings"
+	"time"
 )
 
 const minBlockSize = 32_000
@@ -21,6 +22,8 @@ type migration struct {
 }
 
 func MigrateSQLite(ctx context.Context, db *sql.DB, dir string, logger *slog.Logger) error {
+	start := time.Now()
+
 	if err := runMigrations(ctx, db,
 		migration{table: "primes", create: createTableQuery},
 	); err != nil {
@@ -32,7 +35,13 @@ func MigrateSQLite(ctx context.Context, db *sql.DB, dir string, logger *slog.Log
 		return err
 	}
 
-	return insertData(ctx, db, data, minBlockSize, logger)
+	if err := insertData(ctx, db, data, minBlockSize, logger); err != nil {
+		return err
+	}
+
+	logger.InfoContext(ctx, "operation completed", slog.Duration("time_elapsed", time.Since(start)))
+
+	return nil
 }
 
 func runMigrations(ctx context.Context, db *sql.DB, migrations ...migration) error {
