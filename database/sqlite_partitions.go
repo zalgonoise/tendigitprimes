@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"log/slog"
+	"runtime"
 	"time"
 
 	"modernc.org/sqlite"
@@ -20,7 +21,7 @@ const (
 
 	queryPartitionIDs = `SELECT id FROM scopes;`
 
-	queryAttachDB = `ATTACH DATABASE '%s%s%s.db' AS db%s;`
+	queryAttachDB = `ATTACH DATABASE "file:%s%s%s.db?mode=ro" AS db%s;`
 )
 
 type block struct {
@@ -42,55 +43,46 @@ type block struct {
 //
 // Then, it is possible to attach a hundred SQLite databases on the same index, making the partitions usable. The hard
 // limit is 125 databases: https://www.sqlite.org/limits.html#max_attached
-func AttachSQLite(dir string, pragmas map[string]string, logger *slog.Logger) (*sql.DB, *sql.Conn, error) {
+func AttachSQLite(dir string, pragmas map[string]string, logger *slog.Logger) (*sql.DB, error) {
 	ctx := context.Background()
 
 	db, err := OpenSQLite(dir+"/index.db", pragmas, logger)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	ids, err := getIDs(ctx, db)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	conn, err := attachDBs(ctx, db, dir, ids)
-	if err != nil {
-		return nil, nil, err
+	if err := attachDBs(ctx, db, dir, ids); err != nil {
+		return nil, err
 	}
 
-	return db, conn, nil
+	db.SetMaxOpenConns(runtime.NumCPU())
+	db.SetMaxIdleConns(runtime.NumCPU())
+
+	return db, nil
 }
 
-func attachDBs(ctx context.Context, db *sql.DB, dir string, ids []string) (*sql.Conn, error) {
+func attachDBs(ctx context.Context, db *sql.DB, dir string, ids []string) error {
 	conn, err := db.Conn(ctx)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	if _, err = sqlite.Limit(conn, sqlite3.SQLITE_LIMIT_ATTACHED, len(ids)); err != nil {
-		return nil, err
+		return err
 	}
-
-	tx, err := conn.BeginTx(ctx, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	defer tx.Rollback()
 
 	for i := range ids {
-		if _, err := tx.ExecContext(ctx, fmt.Sprintf(queryAttachDB, dir, pathBlock, ids[i], ids[i])); err != nil {
-			return nil, err
+		if _, err := db.ExecContext(ctx, fmt.Sprintf(queryAttachDB, dir, pathBlock, ids[i], ids[i])); err != nil {
+			return err
 		}
 	}
 
-	if err = tx.Commit(); err != nil {
-		return nil, err
-	}
-
-	return conn, nil
+	return nil
 }
 
 func getIDs(ctx context.Context, db *sql.DB) ([]string, error) {
