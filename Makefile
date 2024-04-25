@@ -15,6 +15,7 @@ out:
 
 generate: generate-protoc bin/mockery
 	PATH=$(PWD)/bin:$$PATH go generate -tags integration ./...
+	redoc-cli bundle -o api/openapi/primes/v1/primes.swagger.html api/openapi/primes/v1/primes.swagger.json
 
 test-unit: lint
 	mkdir -p reports/coverage
