@@ -149,7 +149,7 @@ ____________
 
 # Usage
 
-> You can take a closer look into the scripts directory for database builder scripts, but this guide will
+> You can take a closer look into the `cmd/primes` directory for builder runtime logic, but this guide will
 > focus on creating a partitioned SQLite instance just like the final version I described in [Growth](#growth)
 
 ## Generate SQLite databases from the raw data
@@ -158,12 +158,12 @@ It all begins with the text files under the `raw` directory. They were the initi
 entire set, and they are still the reference for creating the SQLite databases.
 
 Locally, you can create a target directory (say, `parts`) that you will define as an output **directory** for your database 
-index and partitions. This is through the `-o` (output) flag.
+index and partitions. This is through the `-output` flag.
 
-Also, since this guide involves partitioning, you will also want to add the `-p` (partitioned) flag:
+Also, since this guide involves partitioning, you will also want to add the `-partitioned` flag:
 
 ```shell
-go run ./scripts/build-sqlite -p -o ~/path/to/my/parts 
+go run ./cmd/primes build -partitioned -output ~/path/to/my/parts  
 ```
 
 This operation takes a good amount of time (about 1 hour and a half on an M1 Pro Mac), so the log output is verbose 
