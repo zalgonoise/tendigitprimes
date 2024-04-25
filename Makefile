@@ -38,6 +38,22 @@ test-build: ## Tests whether the code compiles
 
 build: out/bin ## Builds all binaries
 
+build-bin:
+	rm -rf ./build && mkdir ./build
+	GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o ./build/primes_linux_amd64 ./cmd/primes
+	GOOS=linux GOARCH=arm64 go build -ldflags="-s -w" -o ./build/primes_linux_arm64 ./cmd/primes
+	GOOS=linux GOARCH=arm go build -ldflags="-s -w" -o ./build/primes_linux_arm ./cmd/primes
+	GOOS=linux GOARCH=386 go build -ldflags="-s -w" -o ./build/primes_linux_386 ./cmd/primes
+	GOOS=linux GOARCH=ppc64le go build -ldflags="-s -w" -o ./build/primes_linux_ppc64le ./cmd/primes
+	GOOS=linux GOARCH=s390x go build -ldflags="-s -w" -o ./build/primes_linux_s390x ./cmd/primes
+
+	GOOS=darwin GOARCH=arm64 go build -ldflags="-s -w" -o ./build/primes_darwin_arm64 ./cmd/primes
+	GOOS=darwin GOARCH=amd64 go build -ldflags="-s -w" -o ./build/primes_darwin_amd64 ./cmd/primes
+
+	GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o ./build/primes_win_amd64.exe ./cmd/primes
+	GOOS=windows GOARCH=arm64 go build -ldflags="-s -w" -o ./build/primes_win_arm64.exe ./cmd/primes
+
+
 GO_BUILD = mkdir -pv "$(@)" && go build -ldflags="-w -s" -o "$(@)" ./...
 .PHONY: out/bin
 out/bin:
