@@ -215,6 +215,8 @@ PRIMES_DB_URI=~/path/to/my/parts PRIMES_DB_IS_PARTITIONED=1 go run ./cmd/primes 
 
 ## Using the service
 
+[Check out the full Swagger spec for this API](./api/openapi/primes/v1/primes.swagger.html)
+
 You can issue HTTP GET requests to both fetch a random prime or a list of them:
 
 ### Random
