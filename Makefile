@@ -37,6 +37,15 @@ fmt: ## Formats all code with go fmt
 test-build: ## Tests whether the code compiles
 	@go build -o /dev/null ./...
 
+test-bench:
+	go test -benchtime=15s -benchmem -bench '^(BenchmarkService_Random)$' -run '^$'  -cpuprofile=/tmp/cpu.pprof  ./primes -tags bench  | prettybench
+	go test -benchtime=15s -benchmem -bench '^(BenchmarkService_Random)$' -run '^$'  -memprofile=/tmp/mem.pprof  ./primes -tags bench  | prettybench
+	go test -benchtime=10s -benchmem -bench '^(BenchmarkPartitioned_Random)$' -run '^$'  -cpuprofile=/tmp/cpu.pprof  ./repository/sqlite -tags bench  | prettybench
+	go test -benchtime=10s -benchmem -bench '^(BenchmarkPartitioned_Random)$' -run '^$'  -memprofile=/tmp/mem.pprof  ./repository/sqlite -tags bench  | prettybench
+
+test-fuzz:
+	CC=$$(which gcc-11) CGO_ENABLED=1 go test -parallel=1 -fuzz FuzzPartitionSet_Random  ./repository/sqlite
+
 build: out/bin ## Builds all binaries
 
 build-bin:
