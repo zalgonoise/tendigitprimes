@@ -52,13 +52,12 @@ func ExecServe(ctx context.Context, logger *slog.Logger, args []string) (int, er
 
 	switch c.Database.Partitioned {
 	case true:
-		var conn *sql.Conn
-		db, conn, err = database.AttachSQLite(c.Database.URI, database.ReadOnlyPragmas(), logger)
+		db, err = database.AttachSQLite(c.Database.URI, database.ReadOnlyPragmas(), logger)
 		if err != nil {
 			return 1, err
 		}
 
-		repo, err = sqlite.NewPartitionSet(db, conn)
+		repo, err = sqlite.NewPartitionSet(db)
 		if err != nil {
 			return 1, err
 		}
