@@ -6,12 +6,10 @@ import (
 	"errors"
 	"fmt"
 	"math/rand/v2"
-	"time"
 )
 
 const (
-	minAlloc       = 64
-	defaultTimeout = time.Minute
+	minAlloc = 64
 
 	querySelectScopes = `SELECT id, min, max, total FROM scopes;`
 
