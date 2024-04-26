@@ -7,15 +7,9 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/zalgonoise/tendigitprimes/metrics"
 	pb "github.com/zalgonoise/tendigitprimes/pb/primes/v1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-)
-
-const (
-	defaultMin int64 = 2
-	defaultMax int64 = 9999999999
 )
 
 type Repository interface {
@@ -116,7 +110,7 @@ func (s Service) List(ctx context.Context, req *pb.ListRequest) (*pb.ListRespons
 	return &pb.ListResponse{Primes: primes}, nil
 }
 
-func NewService(repo Repository, logger *slog.Logger, m *metrics.Metrics) Service {
+func NewService(repo Repository, logger *slog.Logger, m Metrics) Service {
 	return Service{
 		repo:   repo,
 		logger: logger,
