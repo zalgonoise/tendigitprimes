@@ -63,6 +63,45 @@ build-bin:
 	GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o ./build/primes_win_amd64.exe ./cmd/primes
 	GOOS=windows GOARCH=arm64 go build -ldflags="-s -w" -o ./build/primes_win_arm64.exe ./cmd/primes
 
+build-lib:
+	mkdir -p ./lib
+
+	if ! [[ -d ./lib/sqlite ]]; then git clone https://gitlab.com/cznic/sqlite ./lib/sqlite ; fi
+	cd ./lib/sqlite && git fetch && git pull --ff-only
+
+	if ! [[ -d ./lib/libsqlite3 ]]; then git clone https://gitlab.com/cznic/libsqlite3 ./lib/libsqlite3 ; fi
+	cd ./lib/libsqlite3 && git fetch && git pull --ff-only
+
+	if ! [[ -d ./lib/cc ]]; then git clone https://gitlab.com/cznic/cc ./lib/cc ; fi
+	cd ./lib/cc && git fetch && git pull --ff-only
+
+	if ! [[ -d ./lib/ccgo ]]; then git clone https://gitlab.com/cznic/ccgo ./lib/ccgo ; fi
+	cd ./lib/ccgo && git fetch && git pull --ff-only
+
+	if ! [[ -d ./lib/libc ]]; then git clone https://gitlab.com/cznic/libc ./lib/libc ; fi
+	cd ./lib/libc && git fetch && git pull --ff-only
+
+	if ! [[ -d ./lib/libtcl8.6 ]]; then git clone https://gitlab.com/cznic/libtcl8.6 ./lib/libtcl8.6 ; fi
+	cd ./lib/libtcl8.6 && git fetch && git pull --ff-only
+
+	if ! [[ -d ./lib/libz ]]; then git clone https://gitlab.com/cznic/libz ./lib/libz ; fi
+	cd ./lib/libz && git fetch && git pull --ff-only
+
+	cd ./lib/libsqlite3 ; \
+		rm -rf go.work* ; \
+ 		go work init ./ ../cc/v4 ../ccgo/v3 ../ccgo/v4 ../libc ../libtcl8.6 ../libz ; \
+		docker run --rm -ti \
+			-v $$(pwd):/libsqlite3 -v $$(pwd)/../cc:/cc -v $$(pwd)/../ccgo:/ccgo \
+			-v $$(pwd)/../libc:/libc -v $$(pwd)/../libtcl8.6:/libtcl8.6 -v $$(pwd)/../libz:/libz \
+			-v $$(pwd)/../sqlite:/sqlite \
+			-w /libsqlite3 \
+			golang:bullseye \
+			bash -c 'apt update -y; apt upgrade -y; apt install -y make ca-certificates git unzip patch tclsh imagemagick tcl-dev; GO_GENERATE=-DSQLITE_MAX_ATTACHED=125 go generate ./...'
+
+	cd ./lib/sqlite ; go run ./vendor_libsqlite3.go
+
+	rm -rf go.work*
+	go work init ./ ./lib/sqlite
 
 GO_BUILD = mkdir -pv "$(@)" && go build -ldflags="-w -s" -o "$(@)" ./...
 .PHONY: out/bin
