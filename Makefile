@@ -4,7 +4,7 @@ SHELL=/bin/bash -e -o pipefail
 PWD = $(shell pwd)
 
 # constants
-GOLANGCI_VERSION = 1.56.2
+GOLANGCI_VERSION = 1.56.4
 DOCKER_REPO = tendigitprimes
 DOCKER_TAG = latest
 
