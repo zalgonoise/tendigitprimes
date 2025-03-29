@@ -15,11 +15,10 @@ const uriFormat = "postgres://%s:%s@%s/%s"
 
 func main() {
 	logger := slog.New(slog.NewTextHandler(os.Stderr, nil))
-	ctx := context.Background()
 
 	code, err := run(logger)
 	if err != nil {
-		logger.ErrorContext(ctx, "runtime error", slog.String("error", err.Error()))
+		logger.ErrorContext(context.Background(), "runtime error", slog.String("error", err.Error()))
 	}
 
 	os.Exit(code)
