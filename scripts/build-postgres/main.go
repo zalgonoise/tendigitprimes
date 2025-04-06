@@ -26,8 +26,8 @@ func main() {
 
 func run(logger *slog.Logger) (int, error) {
 	ctx := context.Background()
-	input := flag.String("i", "./raw", "path to the input data to consume. Default is './input'")
 
+	input := flag.String("i", "./raw", "path to the input data to consume. Default is './input'")
 	user := flag.String("u", "postgres", "postgres user. Default is 'postgres'")
 	password := flag.String("p", "postgres", "postgres password. Default is 'postgres'")
 	host := flag.String("h", "localhost:5432", "postgres host, with a port specification. Default is 'localhost:5432'")
