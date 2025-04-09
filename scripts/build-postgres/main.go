@@ -35,7 +35,7 @@ func run(logger *slog.Logger) (int, error) {
 
 	flag.Parse()
 
-	logger.InfoContext(ctx, "opening DB")
+	logger.InfoContext(ctx, "opening DB connection")
 	db, err := sql.Open("pgx", fmt.Sprintf(uriFormat, *user, *password, *host, *database))
 	if err != nil {
 		return 1, err
